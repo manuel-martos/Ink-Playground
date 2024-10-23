@@ -1,6 +1,8 @@
 package com.mmartosdev.ink.playground
 
 import android.os.Bundle
+import android.view.MotionEvent
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -137,11 +140,100 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }
-                        Button(
-                            onClick = { strokeAuthoringState.finishedStrokes.value = emptySet() },
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                         ) {
-                            Text("Clear")
+                            Button(
+                                onClick = { strokeAuthoringState.finishedStrokes.value = emptySet() },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text("Clear")
+                            }
+                            Button(
+                                onClick = {
+                                    val downTime = System.nanoTime() / 1_000_000L
+                                    (inProgressStrokesView.parent as? View)?.apply {
+                                        MotionEvent.obtain(
+                                            /* downTime = */ downTime,
+                                            /* eventTime = */ System.nanoTime() / 1_000_000L,
+                                            /* action = */ MotionEvent.ACTION_DOWN,
+                                            /* x = */ 100f,
+                                            /* y = */ 100f,
+                                            /* metaState = */ 0,
+                                        ).also {
+                                            dispatchTouchEvent(it)
+                                            it.recycle()
+                                        }
+                                        repeat(10) { idx ->
+                                            MotionEvent.obtain(
+                                                /* downTime = */ downTime,
+                                                /* eventTime = */ System.nanoTime() / 1_000_000L,
+                                                /* action = */ MotionEvent.ACTION_MOVE,
+                                                /* x = */ 100f + idx,
+                                                /* y = */ 100f,
+                                                /* metaState = */ 0,
+                                            ).also {
+                                                dispatchTouchEvent(it)
+                                                it.recycle()
+                                            }
+                                        }
+                                        repeat(10) { idx ->
+                                            MotionEvent.obtain(
+                                                /* downTime = */ downTime,
+                                                /* eventTime = */ System.nanoTime() / 1_000_000L,
+                                                /* action = */ MotionEvent.ACTION_MOVE,
+                                                /* x = */ 110f,
+                                                /* y = */ 100f + idx,
+                                                /* metaState = */ 0,
+                                            ).also {
+                                                dispatchTouchEvent(it)
+                                                it.recycle()
+                                            }
+                                        }
+                                        repeat(10) { idx ->
+                                            MotionEvent.obtain(
+                                                /* downTime = */ downTime,
+                                                /* eventTime = */ System.nanoTime() / 1_000_000L,
+                                                /* action = */ MotionEvent.ACTION_MOVE,
+                                                /* x = */ 110f - idx,
+                                                /* y = */ 110f,
+                                                /* metaState = */ 0,
+                                            ).also {
+                                                dispatchTouchEvent(it)
+                                                it.recycle()
+                                            }
+                                        }
+                                        repeat(13) { idx ->
+                                            MotionEvent.obtain(
+                                                /* downTime = */ downTime,
+                                                /* eventTime = */ System.nanoTime() / 1_000_000L,
+                                                /* action = */ MotionEvent.ACTION_MOVE,
+                                                /* x = */ 100f,
+                                                /* y = */ 110f - idx,
+                                                /* metaState = */ 0,
+                                            ).also {
+                                                dispatchTouchEvent(it)
+                                                it.recycle()
+                                            }
+                                        }
+                                        MotionEvent.obtain(
+                                            /* downTime = */ downTime,
+                                            /* eventTime = */ System.nanoTime() / 1_000_000L,
+                                            /* action = */ MotionEvent.ACTION_UP,
+                                            /* x = */ 100f,
+                                            /* y = */ 95f,
+                                            /* metaState = */ 0,
+                                        ).also {
+                                            dispatchTouchEvent(it)
+                                            it.recycle()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text("Do stroke")
+                            }
                         }
                     }
                 }
