@@ -123,7 +123,7 @@ fun InkCanvas(
     }
 }
 
-open class StrokeAuthoringTouchListener(
+class StrokeAuthoringTouchListener(
     private val strokeAuthoringState: StrokeAuthoringState,
     private val brush: Brush,
     private val strokeActionInferer: StrokeActionInferer,
