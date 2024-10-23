@@ -28,11 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.ink.authoring.InProgressStrokesView
-import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
 import com.mmartosdev.ink.playground.ui.theme.InkPlaygroundTheme
 
@@ -50,6 +47,8 @@ class MainActivity : ComponentActivity() {
                     var family by remember { mutableStateOf(StockBrushes.markerLatest) }
                     var size by remember { mutableFloatStateOf(5f) }
                     var dashed by remember { mutableStateOf(false) }
+                    val inProgressStrokesView: InProgressStrokesView = rememberInProgressStrokesView()
+                    val strokeAuthoringState: StrokeAuthoringState = rememberStrokeAuthoringState(inProgressStrokesView)
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
@@ -57,38 +56,30 @@ class MainActivity : ComponentActivity() {
                             .padding(horizontal = 16.dp),
 
                         ) {
-                        val context = LocalContext.current
-                        val inProgressStrokesView = remember { InProgressStrokesView(context) }
-                        val strokeAuthoringState = rememberStrokeAuthoringState(inProgressStrokesView)
                         InkCanvas(
-                            strokeAuthoringTouchListener = StrokeAuthoringTouchListener(
-                                strokeAuthoringState = strokeAuthoringState,
-                                brush = Brush.createWithColorIntArgb(
-                                    family = family,
-                                    colorIntArgb = Color.Black.toArgb(),
-                                    size = size,
-                                    epsilon = 0.1F
-                                ),
-                                strokeActionInferer = {
-                                    if (dashed) {
-                                        if ((it.moveEventCount / 5) % 2 == 0) {
-                                            if (it.moveEventCount % 5 != 4) {
-                                                StrokeAction.Update
-                                            } else {
-                                                StrokeAction.Finish
-                                            }
+                            family = family,
+                            size = size,
+                            color = Color.Black,
+                            strokeActionInferer = { strokeAuthoringState ->
+                                if (dashed) {
+                                    if ((strokeAuthoringState.moveEventCount / 5) % 2 == 0) {
+                                        if (strokeAuthoringState.moveEventCount % 5 != 4) {
+                                            StrokeAction.Update
                                         } else {
-                                            if (strokeAuthoringState.moveEventCount % 5 == 4) {
-                                                StrokeAction.Start
-                                            } else {
-                                                StrokeAction.Skip
-                                            }
+                                            StrokeAction.Finish
                                         }
                                     } else {
-                                        StrokeAction.Update
+                                        if (strokeAuthoringState.moveEventCount % 5 == 4) {
+                                            StrokeAction.Start
+                                        } else {
+                                            StrokeAction.Skip
+                                        }
                                     }
-                                },
-                            ),
+                                } else {
+                                    StrokeAction.Update
+                                }
+                            },
+                            inProgressStrokesView = inProgressStrokesView,
                             strokeAuthoringState = strokeAuthoringState,
                             modifier = Modifier
                                 .fillMaxWidth()

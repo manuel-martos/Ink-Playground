@@ -16,12 +16,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.authoring.InProgressStrokeId
 import androidx.ink.authoring.InProgressStrokesFinishedListener
 import androidx.ink.authoring.InProgressStrokesView
 import androidx.ink.brush.Brush
+import androidx.ink.brush.BrushFamily
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
@@ -58,9 +62,20 @@ fun interface StrokeActionInferer {
 @Composable
 @SuppressLint("ClickableViewAccessibility")
 fun InkCanvas(
-    strokeAuthoringTouchListener: StrokeAuthoringTouchListener,
-    strokeAuthoringState: StrokeAuthoringState,
+    family: BrushFamily,
+    size: Float,
+    color: Color,
+    strokeActionInferer: StrokeActionInferer,
     modifier: Modifier = Modifier,
+    inProgressStrokesView: InProgressStrokesView = rememberInProgressStrokesView(),
+    strokeAuthoringState: StrokeAuthoringState = rememberStrokeAuthoringState(inProgressStrokesView),
+    strokeAuthoringTouchListener: StrokeAuthoringTouchListener = rememberStrokeAuthoringTouchListener(
+        strokeAuthoringState = strokeAuthoringState,
+        family = family,
+        color = color,
+        size = size,
+        strokeActionInferer = strokeActionInferer,
+    ),
 ) {
     val canvasStrokeRenderer = CanvasStrokeRenderer.create()
     Box(
@@ -175,12 +190,15 @@ open class StrokeAuthoringTouchListener(
             MotionEvent.ACTION_DOWN -> StrokeAction.Start.also {
                 Log.d("InkCanvas", "down -> ${event.downTime} :: ${event.eventTime}")
             }
+
             MotionEvent.ACTION_MOVE -> strokeActionInferer.mapStateToAction(strokeAuthoringState).also {
                 Log.d("InkCanvas", "move -> ${event.downTime} :: ${event.eventTime}")
             }
+
             MotionEvent.ACTION_UP -> StrokeAction.Finish.also {
                 Log.d("InkCanvas", "up -> ${event.downTime} :: ${event.eventTime}")
             }
+
             MotionEvent.ACTION_CANCEL -> StrokeAction.Cancel
             else -> StrokeAction.Skip
         }
@@ -249,10 +267,37 @@ open class StrokeAuthoringTouchListener(
 }
 
 @Composable
+fun rememberInProgressStrokesView(): InProgressStrokesView {
+    val context = LocalContext.current
+    return remember { InProgressStrokesView(context) }
+}
+
+@Composable
 fun rememberStrokeAuthoringState(
     inProgressStrokesView: InProgressStrokesView,
-) = remember(inProgressStrokesView) {
+): StrokeAuthoringState = remember(inProgressStrokesView) {
     StrokeAuthoringState(inProgressStrokesView).also { listener: InProgressStrokesFinishedListener ->
         inProgressStrokesView.addFinishedStrokesListener(listener)
     }
 }
+
+@Composable
+fun rememberStrokeAuthoringTouchListener(
+    strokeAuthoringState: StrokeAuthoringState,
+    family: BrushFamily,
+    color: Color,
+    size: Float,
+    strokeActionInferer: StrokeActionInferer,
+): StrokeAuthoringTouchListener =
+    remember(family, color, size, strokeActionInferer) {
+        StrokeAuthoringTouchListener(
+            strokeAuthoringState = strokeAuthoringState,
+            brush = Brush.createWithColorIntArgb(
+                family = family,
+                colorIntArgb = color.toArgb(),
+                size = size,
+                epsilon = 0.1F
+            ),
+            strokeActionInferer = strokeActionInferer,
+        )
+    }
