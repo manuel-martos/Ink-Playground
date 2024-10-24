@@ -90,10 +90,9 @@ fun InkCanvas(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
+                    strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(this)
+                    setOnTouchListener(strokeAuthoringTouchListener)
                 }
-                strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(inProgressStrokesView)
-                inProgressStrokesView.setOnTouchListener(strokeAuthoringTouchListener)
-                inProgressStrokesView
             },
             update = { inProgressStrokesView ->
                 inProgressStrokesView.setOnTouchListener(strokeAuthoringTouchListener)
