@@ -133,7 +133,6 @@ class StrokeAuthoringTouchListener(
                 handleStartStroke(
                     event = event,
                     view = view,
-                    defaultBrush = brush,
                 )
                 true
             }
@@ -180,7 +179,6 @@ class StrokeAuthoringTouchListener(
 
     private fun handleStartStroke(
         event: MotionEvent,
-        defaultBrush: Brush,
         view: View,
     ) {
         view.requestUnbufferedDispatch(event)
@@ -190,7 +188,7 @@ class StrokeAuthoringTouchListener(
         strokeAuthoringState.currentStrokeId = strokeAuthoringState.inProgressStrokesView.startStroke(
             event = event,
             pointerId = pointerId,
-            brush = defaultBrush
+            brush = brush
         )
     }
 
