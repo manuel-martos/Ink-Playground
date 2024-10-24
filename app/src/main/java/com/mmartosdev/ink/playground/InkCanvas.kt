@@ -158,7 +158,6 @@ class StrokeAuthoringTouchListener(
         val pointerId = checkNotNull(currentPointerId)
         val strokeId = checkNotNull(currentStrokeId)
 
-        // TODO: Check if there is a chance to have more than one pointer ID within event pointers
         for (pointerIndex in 0 until event.pointerCount) {
             if (event.getPointerId(pointerIndex) != pointerId) continue
             inProgressStrokesView.addToStroke(
