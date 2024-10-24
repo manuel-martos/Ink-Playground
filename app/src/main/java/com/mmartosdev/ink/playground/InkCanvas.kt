@@ -48,7 +48,6 @@ sealed interface StrokeAction {
 }
 
 @Composable
-@SuppressLint("ClickableViewAccessibility")
 fun InkCanvas(
     modifier: Modifier = Modifier,
     inProgressStrokesView: InProgressStrokesView = rememberInProgressStrokesView(),
