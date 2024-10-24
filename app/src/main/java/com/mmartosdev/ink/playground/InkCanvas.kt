@@ -67,19 +67,16 @@ fun InkCanvas(
             modifier = Modifier
                 .fillMaxSize()
                 .clipToBounds(),
-            factory = { context ->
-                val rootView = FrameLayout(context)
+            factory = {
                 inProgressStrokesView.apply {
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
+                    strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(rootView)
+                    setOnTouchListener(StrokeAuthoringTouchListener(strokeAuthoringState, brush))
                 }
-                strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(rootView)
-                rootView.setOnTouchListener(StrokeAuthoringTouchListener(strokeAuthoringState, brush))
-                rootView.addView(inProgressStrokesView)
-                rootView
             },
         )
     }
@@ -102,7 +99,6 @@ class StrokeAuthoringTouchListener(
                 handleStartStroke(
                     event = event,
                     view = view,
-                    defaultBrush = brush,
                 )
                 true
             }
@@ -149,7 +145,6 @@ class StrokeAuthoringTouchListener(
 
     private fun handleStartStroke(
         event: MotionEvent,
-        defaultBrush: Brush,
         view: View,
     ) {
         view.requestUnbufferedDispatch(event)
@@ -159,7 +154,7 @@ class StrokeAuthoringTouchListener(
         strokeAuthoringState.currentStrokeId = strokeAuthoringState.inProgressStrokesView.startStroke(
             event = event,
             pointerId = pointerId,
-            brush = defaultBrush
+            brush = brush,
         )
     }
 
@@ -170,7 +165,6 @@ class StrokeAuthoringTouchListener(
         val pointerId = checkNotNull(strokeAuthoringState.currentPointerId)
         val strokeId = checkNotNull(strokeAuthoringState.currentStrokeId)
 
-        // TODO: Check if there is a chance to have more than one pointer ID within event pointers
         for (pointerIndex in 0 until event.pointerCount) {
             if (event.getPointerId(pointerIndex) != pointerId) continue
             strokeAuthoringState.inProgressStrokesView.addToStroke(
