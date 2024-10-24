@@ -35,8 +35,8 @@ class StrokeAuthoringState(
     var moveEventCount: Int = 0
     var currentStrokeId: InProgressStrokeId? = null
     var currentPointerId: Int? = null
-    lateinit var motionEventPredictor: MotionEventPredictor
     val finishedStrokes = mutableStateOf(emptySet<Stroke>())
+    internal val motionEventPredictor: MotionEventPredictor = MotionEventPredictor.newInstance(inProgressStrokesView)
 
     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
         finishedStrokes.value += strokes.values
@@ -90,7 +90,6 @@ fun InkCanvas(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
-                    strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(this)
                     setOnTouchListener(strokeAuthoringTouchListener)
                 }
             },
