@@ -128,56 +128,49 @@ class StrokeAuthoringTouchListener(
     private val strokeActionInferer: StrokeActionInferer,
 ) : View.OnTouchListener {
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, event: MotionEvent): Boolean {
         val predictedEvent = strokeAuthoringState.motionEventPredictor.run {
             record(event)
             predict()
         }
-        return try {
-            if (event.actionMasked != MotionEvent.ACTION_MOVE) {
-                strokeAuthoringState.moveEventCount = 0
+
+        doPreHandlerAction(event)
+        return when (mapEventToAction(event)) {
+            StrokeAction.Start -> {
+                handleStartStroke(
+                    event = event,
+                    view = view,
+                    defaultBrush = brush,
+                )
+                true
             }
 
-            when (mapEventToAction(event)) {
-                StrokeAction.Start -> {
-                    handleStartStroke(
-                        event = event,
-                        view = view,
-                        defaultBrush = brush,
-                    )
-                    true
-                }
-
-                StrokeAction.Update -> {
-                    handleUpdateStroke(
-                        event = event,
-                        predictedEvent = predictedEvent,
-                    )
-                    true
-                }
-
-                StrokeAction.Finish -> {
-                    handleFinishStroke(
-                        event = event,
-                    )
-                    true
-                }
-
-                StrokeAction.Cancel -> {
-                    handleCancelStroke(
-                        event = event,
-                    )
-                    true
-                }
-
-                StrokeAction.Skip -> false
+            StrokeAction.Update -> {
+                handleUpdateStroke(
+                    event = event,
+                    predictedEvent = predictedEvent,
+                )
+                true
             }
-        } finally {
-            if (event.actionMasked == MotionEvent.ACTION_MOVE) {
-                strokeAuthoringState.moveEventCount++
-            } else if (event.actionMasked == MotionEvent.ACTION_UP) {
-                view.performClick()
+
+            StrokeAction.Finish -> {
+                handleFinishStroke(
+                    event = event,
+                )
+                true
             }
+
+            StrokeAction.Cancel -> {
+                handleCancelStroke(
+                    event = event,
+                )
+                true
+            }
+
+            StrokeAction.Skip -> false
+        }.also {
+            doPostHandlerAction(event, view)
             predictedEvent?.recycle()
         }
     }
@@ -253,6 +246,20 @@ class StrokeAuthoringTouchListener(
             strokeId = strokeAuthoringState.currentStrokeId!!,
             event = event,
         )
+    }
+
+    private fun doPreHandlerAction(event: MotionEvent) {
+        if (event.actionMasked != MotionEvent.ACTION_MOVE) {
+            strokeAuthoringState.moveEventCount = 0
+        }
+    }
+
+    private fun doPostHandlerAction(event: MotionEvent, view: View) {
+        if (event.actionMasked == MotionEvent.ACTION_MOVE) {
+            strokeAuthoringState.moveEventCount++
+        } else if (event.actionMasked == MotionEvent.ACTION_UP) {
+            view.performClick()
+        }
     }
 }
 
