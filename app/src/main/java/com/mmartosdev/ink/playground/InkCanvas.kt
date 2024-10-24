@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.authoring.InProgressStrokeId
 import androidx.ink.authoring.InProgressStrokesFinishedListener
@@ -43,8 +42,6 @@ fun InkCanvas(
         size = 15f,
         epsilon = 0.1F
     )
-    val context = LocalContext.current
-    val inProgressStrokesView = InProgressStrokesView(context)
     Box(
         modifier = modifier,
     ) {
@@ -53,9 +50,8 @@ fun InkCanvas(
                 .fillMaxSize()
                 .clipToBounds(),
             factory = { context ->
-                val rootView = FrameLayout(context)
-                val motionEventPredictor = MotionEventPredictor.newInstance(rootView)
-                inProgressStrokesView.apply {
+                InProgressStrokesView(context).apply {
+                    val motionEventPredictor = MotionEventPredictor.newInstance(this)
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -63,13 +59,11 @@ fun InkCanvas(
                         )
                     addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
                         override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                            inProgressStrokesView.removeFinishedStrokes(strokes.keys)
+                            removeFinishedStrokes(strokes.keys)
                         }
                     })
+                    setOnTouchListener(StrokeAuthoringTouchListener(brush, motionEventPredictor, this))
                 }
-                rootView.setOnTouchListener(StrokeAuthoringTouchListener(brush, motionEventPredictor, inProgressStrokesView))
-                rootView.addView(inProgressStrokesView)
-                rootView
             },
         )
     }
