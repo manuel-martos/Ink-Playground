@@ -1,6 +1,5 @@
 package com.mmartosdev.ink.playground
 
-import android.annotation.SuppressLint
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +10,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.authoring.InProgressStrokesView
 
 @Composable
-@SuppressLint("ClickableViewAccessibility")
 fun InkCanvas(
     modifier: Modifier = Modifier,
 ) {
@@ -23,15 +21,13 @@ fun InkCanvas(
                 .fillMaxSize()
                 .clipToBounds(),
             factory = { context ->
-                val inProgressStrokesView = InProgressStrokesView(context)
-                inProgressStrokesView.apply {
+                InProgressStrokesView(context).apply {
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
                 }
-                inProgressStrokesView
             },
         )
     }
