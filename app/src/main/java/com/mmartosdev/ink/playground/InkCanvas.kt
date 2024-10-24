@@ -7,9 +7,9 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
@@ -24,6 +24,21 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
 
+@Stable
+class StrokeAuthoringState(
+    internal val inProgressStrokesView: InProgressStrokesView,
+) : InProgressStrokesFinishedListener {
+    var currentStrokeId: InProgressStrokeId? = null
+    var currentPointerId: Int? = null
+    lateinit var motionEventPredictor: MotionEventPredictor
+    val finishedStrokes = mutableStateOf(emptySet<Stroke>())
+
+    override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
+        finishedStrokes.value += strokes.values
+        inProgressStrokesView.removeFinishedStrokes(strokes.keys)
+    }
+}
+
 sealed interface StrokeAction {
     data object Start : StrokeAction
     data object Update : StrokeAction
@@ -36,6 +51,8 @@ sealed interface StrokeAction {
 @SuppressLint("ClickableViewAccessibility")
 fun InkCanvas(
     modifier: Modifier = Modifier,
+    inProgressStrokesView: InProgressStrokesView = rememberInProgressStrokesView(),
+    strokeAuthoringState: StrokeAuthoringState = rememberStrokeAuthoringState(inProgressStrokesView),
 ) {
     val brush = Brush.createWithColorIntArgb(
         family = StockBrushes.pressurePenLatest,
@@ -43,8 +60,6 @@ fun InkCanvas(
         size = 15f,
         epsilon = 0.1F
     )
-    val context = LocalContext.current
-    val inProgressStrokesView = InProgressStrokesView(context)
     Box(
         modifier = modifier,
     ) {
@@ -54,20 +69,15 @@ fun InkCanvas(
                 .clipToBounds(),
             factory = { context ->
                 val rootView = FrameLayout(context)
-                val motionEventPredictor = MotionEventPredictor.newInstance(rootView)
                 inProgressStrokesView.apply {
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
-                    addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
-                        override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                            inProgressStrokesView.removeFinishedStrokes(strokes.keys)
-                        }
-                    })
                 }
-                rootView.setOnTouchListener(StrokeAuthoringTouchListener(brush, motionEventPredictor, inProgressStrokesView))
+                strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(rootView)
+                rootView.setOnTouchListener(StrokeAuthoringTouchListener(strokeAuthoringState, brush))
                 rootView.addView(inProgressStrokesView)
                 rootView
             },
@@ -76,17 +86,13 @@ fun InkCanvas(
 }
 
 class StrokeAuthoringTouchListener(
+    private val strokeAuthoringState: StrokeAuthoringState,
     private val brush: Brush,
-    private val motionEventPredictor: MotionEventPredictor,
-    private val inProgressStrokesView: InProgressStrokesView,
 ) : View.OnTouchListener {
-
-    var currentPointerId by mutableStateOf<Int?>(null)
-    var currentStrokeId by mutableStateOf<InProgressStrokeId?>(null)
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, event: MotionEvent): Boolean {
-        val predictedEvent = motionEventPredictor.run {
+        val predictedEvent = strokeAuthoringState.motionEventPredictor.run {
             record(event)
             predict()
         }
@@ -149,8 +155,8 @@ class StrokeAuthoringTouchListener(
         view.requestUnbufferedDispatch(event)
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
-        currentPointerId = pointerId
-        currentStrokeId = inProgressStrokesView.startStroke(
+        strokeAuthoringState.currentPointerId = pointerId
+        strokeAuthoringState.currentStrokeId = strokeAuthoringState.inProgressStrokesView.startStroke(
             event = event,
             pointerId = pointerId,
             brush = defaultBrush
@@ -161,13 +167,13 @@ class StrokeAuthoringTouchListener(
         event: MotionEvent,
         predictedEvent: MotionEvent?,
     ) {
-        val pointerId = checkNotNull(currentPointerId)
-        val strokeId = checkNotNull(currentStrokeId)
+        val pointerId = checkNotNull(strokeAuthoringState.currentPointerId)
+        val strokeId = checkNotNull(strokeAuthoringState.currentStrokeId)
 
         // TODO: Check if there is a chance to have more than one pointer ID within event pointers
         for (pointerIndex in 0 until event.pointerCount) {
             if (event.getPointerId(pointerIndex) != pointerId) continue
-            inProgressStrokesView.addToStroke(
+            strokeAuthoringState.inProgressStrokesView.addToStroke(
                 event,
                 pointerId,
                 strokeId,
@@ -181,11 +187,11 @@ class StrokeAuthoringTouchListener(
     ) {
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
-        if (pointerId == currentPointerId) {
-            inProgressStrokesView.finishStroke(
+        if (pointerId == strokeAuthoringState.currentPointerId) {
+            strokeAuthoringState.inProgressStrokesView.finishStroke(
                 event,
                 pointerId,
-                currentStrokeId!!
+                strokeAuthoringState.currentStrokeId!!
             )
         }
     }
@@ -195,10 +201,10 @@ class StrokeAuthoringTouchListener(
     ) {
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
-        check(pointerId == currentPointerId)
+        check(pointerId == strokeAuthoringState.currentPointerId)
 
-        inProgressStrokesView.cancelStroke(
-            strokeId = currentStrokeId!!,
+        strokeAuthoringState.inProgressStrokesView.cancelStroke(
+            strokeId = strokeAuthoringState.currentStrokeId!!,
             event = event,
         )
     }
@@ -207,5 +213,20 @@ class StrokeAuthoringTouchListener(
         if (event.actionMasked == MotionEvent.ACTION_UP) {
             view.performClick()
         }
+    }
+}
+
+@Composable
+fun rememberInProgressStrokesView(): InProgressStrokesView {
+    val context = LocalContext.current
+    return remember { InProgressStrokesView(context) }
+}
+
+@Composable
+fun rememberStrokeAuthoringState(
+    inProgressStrokesView: InProgressStrokesView,
+): StrokeAuthoringState = remember(inProgressStrokesView) {
+    StrokeAuthoringState(inProgressStrokesView).also { listener: InProgressStrokesFinishedListener ->
+        inProgressStrokesView.addFinishedStrokesListener(listener)
     }
 }
