@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.authoring.InProgressStrokesView
 
@@ -16,8 +15,6 @@ import androidx.ink.authoring.InProgressStrokesView
 fun InkCanvas(
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val inProgressStrokesView = InProgressStrokesView(context)
     Box(
         modifier = modifier,
     ) {
@@ -26,7 +23,7 @@ fun InkCanvas(
                 .fillMaxSize()
                 .clipToBounds(),
             factory = { context ->
-                val rootView = FrameLayout(context)
+                val inProgressStrokesView = InProgressStrokesView(context)
                 inProgressStrokesView.apply {
                     layoutParams =
                         FrameLayout.LayoutParams(
@@ -34,8 +31,7 @@ fun InkCanvas(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
                 }
-                rootView.addView(inProgressStrokesView)
-                rootView
+                inProgressStrokesView
             },
         )
     }
