@@ -43,7 +43,7 @@ fun InkCanvas(
                 .clipToBounds(),
             factory = { context ->
                 InProgressStrokesView(context).apply {
-                    val predictor = MotionEventPredictor.newInstance(rootView)
+                    val motionEventPredictor = MotionEventPredictor.newInstance(rootView)
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -55,8 +55,8 @@ fun InkCanvas(
                         }
                     })
                     setOnTouchListener { view, event ->
-                        predictor.record(event)
-                        val predictedEvent = predictor.predict()
+                        motionEventPredictor.record(event)
+                        val predictedEvent = motionEventPredictor.predict()
                         when (event.actionMasked) {
                             MotionEvent.ACTION_DOWN -> {
                                 view.requestUnbufferedDispatch(event)
