@@ -1,9 +1,11 @@
 package com.mmartosdev.ink.playground
 
 import android.annotation.SuppressLint
+import android.graphics.Matrix
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -13,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -21,6 +24,7 @@ import androidx.ink.authoring.InProgressStrokesFinishedListener
 import androidx.ink.authoring.InProgressStrokesView
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
+import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
 
@@ -54,6 +58,7 @@ fun InkCanvas(
     inProgressStrokesView: InProgressStrokesView = rememberInProgressStrokesView(),
     strokeAuthoringState: StrokeAuthoringState = rememberStrokeAuthoringState(inProgressStrokesView),
 ) {
+    val canvasStrokeRenderer = CanvasStrokeRenderer.create()
     val brush = Brush.createWithColorIntArgb(
         family = StockBrushes.pressurePenLatest,
         colorIntArgb = Color.Black.toArgb(),
@@ -82,6 +87,19 @@ fun InkCanvas(
                 rootView
             },
         )
+        Canvas(modifier = Modifier) {
+            val canvasTransform = Matrix()
+            drawContext.canvas.nativeCanvas.concat(canvasTransform)
+            val canvas = drawContext.canvas.nativeCanvas
+
+            strokeAuthoringState.finishedStrokes.value.forEach { stroke ->
+                canvasStrokeRenderer.draw(
+                    stroke = stroke,
+                    canvas = canvas,
+                    strokeToScreenTransform = canvasTransform,
+                )
+            }
+        }
     }
 }
 
