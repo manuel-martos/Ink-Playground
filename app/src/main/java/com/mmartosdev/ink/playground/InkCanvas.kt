@@ -34,8 +34,8 @@ class StrokeAuthoringState(
 ) : InProgressStrokesFinishedListener {
     var currentStrokeId: InProgressStrokeId? = null
     var currentPointerId: Int? = null
-    lateinit var motionEventPredictor: MotionEventPredictor
     val finishedStrokes = mutableStateOf(emptySet<Stroke>())
+    internal val motionEventPredictor: MotionEventPredictor = MotionEventPredictor.newInstance(inProgressStrokesView)
 
     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
         finishedStrokes.value += strokes.values
@@ -72,19 +72,15 @@ fun InkCanvas(
             modifier = Modifier
                 .fillMaxSize()
                 .clipToBounds(),
-            factory = { context ->
-                val rootView = FrameLayout(context)
+            factory = {
                 inProgressStrokesView.apply {
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
+                    setOnTouchListener(StrokeAuthoringTouchListener(strokeAuthoringState, brush))
                 }
-                strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(rootView)
-                rootView.setOnTouchListener(StrokeAuthoringTouchListener(strokeAuthoringState, brush))
-                rootView.addView(inProgressStrokesView)
-                rootView
             },
         )
         Canvas(modifier = Modifier) {
@@ -120,7 +116,6 @@ class StrokeAuthoringTouchListener(
                 handleStartStroke(
                     event = event,
                     view = view,
-                    defaultBrush = brush,
                 )
                 true
             }
@@ -167,7 +162,6 @@ class StrokeAuthoringTouchListener(
 
     private fun handleStartStroke(
         event: MotionEvent,
-        defaultBrush: Brush,
         view: View,
     ) {
         view.requestUnbufferedDispatch(event)
@@ -177,7 +171,7 @@ class StrokeAuthoringTouchListener(
         strokeAuthoringState.currentStrokeId = strokeAuthoringState.inProgressStrokesView.startStroke(
             event = event,
             pointerId = pointerId,
-            brush = defaultBrush
+            brush = brush
         )
     }
 
