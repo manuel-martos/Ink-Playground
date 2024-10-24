@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.graphics.Matrix
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -84,26 +83,20 @@ fun InkCanvas(
             modifier = Modifier
                 .fillMaxSize()
                 .clipToBounds(),
-            factory = { context ->
-                val rootView = FrameLayout(context)
-                val parentViewGroup = strokeAuthoringState.inProgressStrokesView.parent as? ViewGroup
-                parentViewGroup?.apply {
-                    removeView(strokeAuthoringState.inProgressStrokesView)
-                }
-                strokeAuthoringState.inProgressStrokesView.apply {
+            factory = {
+                inProgressStrokesView.apply {
                     layoutParams =
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
                 }
-                strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(rootView)
-                rootView.setOnTouchListener(strokeAuthoringTouchListener)
-                rootView.addView(strokeAuthoringState.inProgressStrokesView)
-                rootView
+                strokeAuthoringState.motionEventPredictor = MotionEventPredictor.newInstance(inProgressStrokesView)
+                inProgressStrokesView.setOnTouchListener(strokeAuthoringTouchListener)
+                inProgressStrokesView
             },
-            update = { rootView ->
-                rootView.setOnTouchListener(strokeAuthoringTouchListener)
+            update = { inProgressStrokesView ->
+                inProgressStrokesView.setOnTouchListener(strokeAuthoringTouchListener)
             }
         )
         Canvas(modifier = Modifier) {
