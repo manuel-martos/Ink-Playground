@@ -2,7 +2,6 @@ package com.mmartosdev.ink.playground
 
 import android.annotation.SuppressLint
 import android.graphics.Matrix
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -187,18 +186,9 @@ class StrokeAuthoringTouchListener(
         event: MotionEvent,
     ): StrokeAction =
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> StrokeAction.Start.also {
-                Log.d("InkCanvas", "down -> ${event.downTime} :: ${event.eventTime}")
-            }
-
-            MotionEvent.ACTION_MOVE -> strokeActionInferer.mapStateToAction(strokeAuthoringState).also {
-                Log.d("InkCanvas", "move -> ${event.downTime} :: ${event.eventTime}")
-            }
-
-            MotionEvent.ACTION_UP -> StrokeAction.Finish.also {
-                Log.d("InkCanvas", "up -> ${event.downTime} :: ${event.eventTime}")
-            }
-
+            MotionEvent.ACTION_DOWN -> StrokeAction.Start
+            MotionEvent.ACTION_MOVE -> strokeActionInferer.mapStateToAction(strokeAuthoringState)
+            MotionEvent.ACTION_UP -> StrokeAction.Finish
             MotionEvent.ACTION_CANCEL -> StrokeAction.Cancel
             else -> StrokeAction.Skip
         }
