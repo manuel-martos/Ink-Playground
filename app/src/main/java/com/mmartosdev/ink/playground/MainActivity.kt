@@ -54,12 +54,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .padding(innerPadding)
                             .padding(horizontal = 16.dp),
-
                         ) {
                         InkCanvas(
                             family = family,
                             size = size,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             strokeActionInferer = { strokeAuthoringState ->
                                 if (dashed) {
                                     if ((strokeAuthoringState.moveEventCount / 5) % 2 == 0) {

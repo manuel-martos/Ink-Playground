@@ -58,6 +58,7 @@ fun interface StrokeActionInferer {
 }
 
 @Composable
+@SuppressLint("ClickableViewAccessibility")
 fun InkCanvas(
     family: BrushFamily,
     size: Float,

@@ -1,14 +1,14 @@
 [versions]
 activityCompose = "1.9.3"
-agp = "8.7.1"
-composeBom = "2024.10.00"
-coreKtx = "1.13.1"
+agp = "8.7.2"
+composeBom = "2024.10.01"
+coreKtx = "1.15.0"
 espressoCore = "3.6.1"
 ink = "1.0.0-alpha01"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 kotlin = "2.0.20"
-lifecycleRuntimeKtx = "2.8.6"
+lifecycleRuntimeKtx = "2.8.7"
 inputMotionprediction = "1.0.0-beta05"
 
 [libraries]
@@ -38,4 +38,3 @@ androidx-input-motionprediction = { group = "androidx.input", name = "input-moti
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
